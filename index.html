@@ -49,7 +49,7 @@
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>Popmart AutoBot by bankkkiizz V1.14</h2>
+  <h2>Popmart AutoBot by bankkkiizz V1.15</h2>
 
   <label>Branch</label>
   <select id="branch">
@@ -155,11 +155,18 @@
             setTimeout(() => {
               timeBtn.click(); console.log("🕒 Time:", targetTime);
               waitFor(() => {
-                const btn = document.getElementById("confirmTime");
-                return btn && btn.innerText.trim().toLowerCase().includes("confirm") && btn.offsetParent !== null && getComputedStyle(btn).display !== "none";
-              }, (confirmBtn) => {
-                confirmBtn.click(); console.log("✅ Confirm clicked");
-              }, 300, 60000);
+  return [...document.querySelectorAll("button")].find(btn =>
+    btn.innerText.trim().toLowerCase() === "confirm" &&
+    btn.offsetParent !== null &&
+    getComputedStyle(btn).visibility !== "hidden" &&
+    getComputedStyle(btn).display !== "none" &&
+    !btn.disabled
+  );
+}, (confirmBtn) => {
+  confirmBtn.click();
+  console.log("✅ Confirm clicked");
+}, 300, 60000);
+
             }, 300);
           });
         });
