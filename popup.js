@@ -1,31 +1,35 @@
-
 const timeSelect = document.getElementById("time");
-for (let h = 10; h <= 20; h++) {
-  ["00", "30"].forEach(m => {
-    const hh = h.toString().padStart(2, "0");
+for (let hour = 10; hour <= 20; hour++) {
+  ["30", "00"].forEach((m, i) => {
+    if (hour === 10 && i === 0) return; // เริ่มที่ 10:30
+    const h = hour.toString().padStart(2, "0");
+    const t = `${h}:${m}`;
     const opt = document.createElement("option");
-    opt.value = opt.textContent = `${hh}:${m}`;
+    opt.value = t;
+    opt.textContent = t;
     timeSelect.appendChild(opt);
   });
 }
-let final = document.createElement("option");
-final.value = final.textContent = "21:00";
-timeSelect.appendChild(final);
+timeSelect.appendChild(new Option("21:00", "21:00"));
 
-document.getElementById("save").addEventListener("click", () => {
+// โหลดค่าจาก LocalStorage
+window.onload = () => {
+  const config = JSON.parse(localStorage.getItem("config")) || {};
+  if (config) {
+    document.getElementById("branch").value = config.targetBranch || "";
+    document.getElementById("date").value = config.targetDate || "";
+    document.getElementById("time").value = config.targetTime || "";
+    document.getElementById("autoRun").checked = config.autoRun || false;
+  }
+};
+
+function saveSettings() {
   const config = {
     targetBranch: document.getElementById("branch").value,
     targetDate: document.getElementById("date").value,
     targetTime: document.getElementById("time").value,
     autoRun: document.getElementById("autoRun").checked
   };
-  localStorage.setItem("popmart_config", JSON.stringify(config));
+  localStorage.setItem("config", JSON.stringify(config));
   alert("✅ Settings Saved");
-});
-window.addEventListener("load", () => {
-  const config = JSON.parse(localStorage.getItem("popmart_config") || "{}");
-  if (config.targetBranch) document.getElementById("branch").value = config.targetBranch;
-  if (config.targetDate) document.getElementById("date").value = config.targetDate;
-  if (config.targetTime) document.getElementById("time").value = config.targetTime;
-  document.getElementById("autoRun").checked = config.autoRun ?? true;
-});
+}
