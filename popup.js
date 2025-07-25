@@ -1,7 +1,7 @@
 const timeSelect = document.getElementById("time");
 for (let hour = 10; hour <= 20; hour++) {
   ["30", "00"].forEach((m, i) => {
-    if (hour === 10 && i === 0) return; // เริ่มที่ 10:30
+    if (hour === 10 && i === 0) return; 
     const h = hour.toString().padStart(2, "0");
     const t = `${h}:${m}`;
     const opt = document.createElement("option");
@@ -12,7 +12,6 @@ for (let hour = 10; hour <= 20; hour++) {
 }
 timeSelect.appendChild(new Option("21:00", "21:00"));
 
-// โหลดค่าจาก LocalStorage
 window.onload = () => {
   const config = JSON.parse(localStorage.getItem("config")) || {};
   if (config) {
