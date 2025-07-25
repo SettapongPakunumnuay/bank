@@ -42,14 +42,14 @@
     textarea {
       margin-top: 10px;
       width: 100%;
-      height: 100px;
+      height: 120px;
       font-size: 12px;
     }
   </style>
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>Popmart AutoBot by bankkkiizz V1.11</h2>
+  <h2>Popmart AutoBot by bankkkiizz V1.12</h2>
 
   <label>Branch</label>
   <select id="branch">
@@ -77,39 +77,32 @@
   <label>Time</label>
   <select id="time"></select>
 
-  <label>
-    <input type="checkbox" id="autoRun" />
-    เปิด/ปิดการทำงานของบอท
-  </label>
+  <label><input type="checkbox" id="autoRun" /> เปิด/ปิดการทำงานของบอท</label>
 
   <button onclick="saveSettings()">Save</button>
   <button onclick="generateBookmarklet()">Copy Bookmarklet</button>
 
-  <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet will appear here..."></textarea>
+  <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet จะถูกสร้างที่นี่..."></textarea>
 
   <script>
+    // Time options
     const timeSelect = document.getElementById("time");
     for (let hour = 10; hour <= 20; hour++) {
       ["30", "00"].forEach((m, i) => {
         if (hour === 10 && i === 0) return;
         const h = hour.toString().padStart(2, "0");
-        const t = `${h}:${m}`;
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        timeSelect.appendChild(opt);
+        timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
       });
     }
     timeSelect.appendChild(new Option("21:00", "21:00"));
 
+    // Load config
     window.onload = () => {
       const config = JSON.parse(localStorage.getItem("config")) || {};
-      if (config) {
-        document.getElementById("branch").value = config.targetBranch || "";
-        document.getElementById("date").value = config.targetDate || "";
-        document.getElementById("time").value = config.targetTime || "";
-        document.getElementById("autoRun").checked = config.autoRun || false;
-      }
+      document.getElementById("branch").value = config.targetBranch || "";
+      document.getElementById("date").value = config.targetDate || "";
+      document.getElementById("time").value = config.targetTime || "";
+      document.getElementById("autoRun").checked = config.autoRun || false;
     };
 
     function saveSettings() {
@@ -124,35 +117,74 @@
     }
 
     function generateBookmarklet() {
-      const branch = document.getElementById("branch").value;
-      const date = document.getElementById("date").value;
-      const time = document.getElementById("time").value;
+      const config = {
+        targetBranch: document.getElementById("branch").value,
+        targetDate: document.getElementById("date").value,
+        targetTime: document.getElementById("time").value
+      };
+      const payload = `
+(() => {
+  if (!confirm("ยืนยันเริ่มทำงาน?")) return;
+  const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
+  const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
+    const start = Date.now();
+    const loop = setInterval(() => {
+      const result = checkFn();
+      if (result) {
+        clearInterval(loop);
+        callback(result);
+      } else if (Date.now() - start > timeout) {
+        clearInterval(loop);
+        console.warn("⏱ Timeout");
+      }
+    }, interval);
+  };
 
-      const payload = `(function(){
-if(!confirm('ยืนยันเริ่มทำงาน?'))return;
-const targetBranch="${branch}",targetDate="${date}",targetTime="${time}";
-const waitFor=(c,b,i=300,t=18e5)=>{const s=Date.now();const l=setInterval(()=>{const r=c();if(r){clearInterval(l);b(r)}else if(Date.now()-s>t){clearInterval(l);console.warn("⏱ Timeout")}},i)};
-waitFor(()=>[...document.querySelectorAll("button")].find(btn=>btn.innerText.trim()==="Register"&&!btn.disabled),
-registerBtn=>{registerBtn.click();console.log("✅ Register");
-waitFor(()=>[...document.querySelectorAll(".branch-item")].find(el=>el.innerText.includes(targetBranch)&&!el.classList.contains("full")),
-branchEl=>{branchEl.click();console.log("🏢 Branch:",targetBranch);
-waitFor(()=>[...document.querySelectorAll("button,div,span")].find(el=>el.innerText.trim().toLowerCase()==="next"&&!el.disabled&&!el.classList.contains("disabled")&&getComputedStyle(el).pointerEvents!=="none"),
-nextBtn=>{nextBtn.click();console.log("➡️ Next");
-const day=new Date(targetDate).getDate().toString();
-waitFor(()=>{const e=document.getElementById("day"+day);if(e)return e;
-return[...document.querySelectorAll(".calendar-cell,.day-selectable")].find(el=>el.innerText.trim()===day&&!el.classList.contains("day-selected"))},
-dayEl=>{dayEl.click();console.log("📅 Day:",day);
-waitFor(()=>[...document.querySelectorAll(".time-btn")].find(btn=>btn.innerText.trim()===targetTime&&!btn.disabled),
-timeBtn=>{setTimeout(()=>{timeBtn.click();console.log("🕒 Time:",targetTime);
-waitFor(()=>{const c=document.getElementById("confirmTime");return c&&getComputedStyle(c).display!=="none"},
-confirmBtn=>{confirmBtn.click();console.log("✅ Confirm")},300,60000)},300)})})})})})})();`;
+  waitFor(() => [...document.querySelectorAll("button")].find(
+    btn => btn.innerText.trim() === "Register" && !btn.disabled),
+  (registerBtn) => {
+    registerBtn.click(); console.log("✅ Register");
+    waitFor(() => [...document.querySelectorAll(".branch-item")].find(
+      el => el.innerText.includes(targetBranch) && !el.classList.contains("full")),
+    (branchEl) => {
+      branchEl.click(); console.log("🏢 Branch:", targetBranch);
+      waitFor(() => [...document.querySelectorAll("button,div,span")].find(
+        el => el.innerText.trim().toLowerCase() === "next" && !el.disabled && getComputedStyle(el).pointerEvents !== "none"),
+      (nextBtn) => {
+        nextBtn.click(); console.log("➡️ Next");
+        const day = new Date(targetDate).getDate().toString();
+        waitFor(() => {
+          const byId = document.getElementById("day" + day);
+          if (byId) return byId;
+          return [...document.querySelectorAll(".calendar-cell, .day-selectable")]
+            .find(el => el.innerText.trim() === day && !el.classList.contains("day-selected"));
+        }, (dayEl) => {
+          dayEl.click(); console.log("📅 Day:", day);
+          waitFor(() => [...document.querySelectorAll(".time-btn")].find(
+            btn => btn.innerText.trim() === targetTime && !btn.disabled),
+          (timeBtn) => {
+            setTimeout(() => {
+              timeBtn.click(); console.log("🕒 Time:", targetTime);
+              waitFor(() => {
+                const confirmBtn = document.getElementById("confirmTime");
+                return confirmBtn && getComputedStyle(confirmBtn).display !== "none";
+              }, (confirmBtn) => {
+                confirmBtn.click();
+                console.log("✅ Confirm clicked");
+              }, 300, 60000);
+            }, 300);
+          });
+        });
+      });
+    });
+  });})();`;
 
       const bookmarklet = "javascript:" + encodeURIComponent(payload);
       const textarea = document.getElementById("bookmarkletOutput");
       textarea.value = bookmarklet;
       textarea.select();
       document.execCommand("copy");
-      alert("📋 Bookmarklet copied! นำไปวางใน Bookmark Safari ได้เลย");
+      alert("📋 Bookmarklet คัดลอกแล้ว นำไปวางใน Bookmark Safari ได้เลย");
     }
   </script>
 </body>

@@ -12,6 +12,7 @@ for (let hour = 10; hour <= 20; hour++) {
 }
 timeSelect.appendChild(new Option("21:00", "21:00"));
 
+// โหลดค่าจาก LocalStorage
 window.onload = () => {
   const config = JSON.parse(localStorage.getItem("config")) || {};
   if (config) {
