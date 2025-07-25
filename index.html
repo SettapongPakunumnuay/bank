@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POP MART Auto Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
+    img {
+      width: 100px;
+      display: block;
+      margin: 0 auto 10px;
+    }
+    label, select, input, button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #e60012;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <img src="icon.jpg" alt="POP MART Logo" />
+  <h2 style="text-align:center;">Popmart Auto Bot by bank</h2>
+
+  <label>Branch
+    <select id="branch">
+      <option>Terminal 21</option>
+      <option>Central Ladprao</option>
+      <option>Fashion Island</option>
+      <option>Centralworld</option>
+      <option>MEGABANGNA</option>
+      <option>Siam Square</option>
+      <option>Central Pattaya</option>
+      <option>Seacon Square</option>
+      <option>Central Westgate</option>
+      <option>Central Chiangmai</option>
+    </select>
+  </label>
+
+  <label>Date
+    <input type="date" id="date" value="2025-07-20"/>
+  </label>
+
+  <label>Time
+    <select id="time"></select>
+  </label>
+
+  <label><input type="checkbox" id="autoRun" checked /> เปิดใช้งานทำงานของบอท</label>
+  <label><input type="checkbox" disabled /> บอทแคปชารูปภาพ (Coming Soon)</label>
+
+  <button id="save">Save</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
