@@ -42,14 +42,14 @@
     textarea {
       margin-top: 10px;
       width: 100%;
-      height: 120px;
+      height: 140px;
       font-size: 12px;
     }
   </style>
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>Popmart AutoBot by bankkkiizz V1.12</h2>
+  <h2>Popmart AutoBot by bankkkiizz V1.14</h2>
 
   <label>Branch</label>
   <select id="branch">
@@ -85,7 +85,6 @@
   <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet จะถูกสร้างที่นี่..."></textarea>
 
   <script>
-    // Time options
     const timeSelect = document.getElementById("time");
     for (let hour = 10; hour <= 20; hour++) {
       ["30", "00"].forEach((m, i) => {
@@ -96,7 +95,6 @@
     }
     timeSelect.appendChild(new Option("21:00", "21:00"));
 
-    // Load config
     window.onload = () => {
       const config = JSON.parse(localStorage.getItem("config")) || {};
       document.getElementById("branch").value = config.targetBranch || "";
@@ -126,65 +124,56 @@
 (() => {
   if (!confirm("ยืนยันเริ่มทำงาน?")) return;
   const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
-  const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
+  const waitFor = (checkFn, cb, interval = 300, timeout = 1800000) => {
     const start = Date.now();
     const loop = setInterval(() => {
-      const result = checkFn();
-      if (result) {
-        clearInterval(loop);
-        callback(result);
-      } else if (Date.now() - start > timeout) {
-        clearInterval(loop);
-        console.warn("⏱ Timeout");
-      }
+      const el = checkFn();
+      if (el) { clearInterval(loop); cb(el); }
+      else if (Date.now() - start > timeout) { clearInterval(loop); console.warn("⏱ Timeout"); }
     }, interval);
   };
-
-  waitFor(() => [...document.querySelectorAll("button")].find(
-    btn => btn.innerText.trim() === "Register" && !btn.disabled),
+  waitFor(() => [...document.querySelectorAll("button")].find(b => b.innerText.trim() === "Register" && !b.disabled),
   (registerBtn) => {
     registerBtn.click(); console.log("✅ Register");
-    waitFor(() => [...document.querySelectorAll(".branch-item")].find(
-      el => el.innerText.includes(targetBranch) && !el.classList.contains("full")),
+    waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.includes(targetBranch) && !el.classList.contains("full")),
     (branchEl) => {
       branchEl.click(); console.log("🏢 Branch:", targetBranch);
-      waitFor(() => [...document.querySelectorAll("button,div,span")].find(
-        el => el.innerText.trim().toLowerCase() === "next" && !el.disabled && getComputedStyle(el).pointerEvents !== "none"),
-      (nextBtn) => {
+      waitFor(() => [...document.querySelectorAll("button,div,span")].find(el => {
+        const txt = el.innerText?.trim()?.toLowerCase();
+        return txt === "next" && !el.disabled && !el.classList.contains("disabled") && getComputedStyle(el).pointerEvents !== "none";
+      }), (nextBtn) => {
         nextBtn.click(); console.log("➡️ Next");
         const day = new Date(targetDate).getDate().toString();
         waitFor(() => {
-          const byId = document.getElementById("day" + day);
-          if (byId) return byId;
-          return [...document.querySelectorAll(".calendar-cell, .day-selectable")]
-            .find(el => el.innerText.trim() === day && !el.classList.contains("day-selected"));
+          const elById = document.getElementById("day" + day);
+          if (elById) return elById;
+          return [...document.querySelectorAll(".calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && !el.classList.contains("day-selected"));
         }, (dayEl) => {
           dayEl.click(); console.log("📅 Day:", day);
-          waitFor(() => [...document.querySelectorAll(".time-btn")].find(
-            btn => btn.innerText.trim() === targetTime && !btn.disabled),
+          waitFor(() => [...document.querySelectorAll(".time-btn")].find(btn => btn.innerText.trim() === targetTime && !btn.disabled),
           (timeBtn) => {
             setTimeout(() => {
               timeBtn.click(); console.log("🕒 Time:", targetTime);
               waitFor(() => {
-                const confirmBtn = document.getElementById("confirmTime");
-                return confirmBtn && getComputedStyle(confirmBtn).display !== "none";
+                const btn = document.getElementById("confirmTime");
+                return btn && btn.innerText.trim().toLowerCase().includes("confirm") && btn.offsetParent !== null && getComputedStyle(btn).display !== "none";
               }, (confirmBtn) => {
-                confirmBtn.click();
-                console.log("✅ Confirm clicked");
+                confirmBtn.click(); console.log("✅ Confirm clicked");
               }, 300, 60000);
             }, 300);
           });
         });
       });
     });
-  });})();`;
+  });
+})();`;
 
       const bookmarklet = "javascript:" + encodeURIComponent(payload);
-      const textarea = document.getElementById("bookmarkletOutput");
-      textarea.value = bookmarklet;
-      textarea.select();
+      const output = document.getElementById("bookmarkletOutput");
+      output.value = bookmarklet;
+      output.select();
       document.execCommand("copy");
-      alert("📋 Bookmarklet คัดลอกแล้ว นำไปวางใน Bookmark Safari ได้เลย");
+      alert("📋 คัดลอก Bookmarklet แล้ว! วางใน Safari หรือ Browser ได้เลย");
     }
   </script>
 </body>
