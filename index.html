@@ -19,19 +19,14 @@
         .header h2 { font-size: 22px; color: #111; margin: 0; }
         .header p { font-size: 14px; color: #666; }
         .form-group { margin-bottom: 15px; }
-        label {
-            display: block; margin-bottom: 8px; font-weight: 600;
-            color: #333; font-size: 14px;
-        }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 14px; }
         select, input, textarea, button {
             width: 100%; padding: 12px; margin-top: 4px; border-radius: 8px;
             border: 1px solid #ccc; box-sizing: border-box; font-size: 16px;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         select:focus, input:focus, textarea:focus {
-            border-color: #e60012;
-            box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.15);
-            outline: none;
+            border-color: #e60012; box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.15); outline: none;
         }
         button {
             background: #e60012; color: white; font-weight: bold; cursor: pointer;
@@ -46,7 +41,7 @@
         <div class="header">
             <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
             <h2>Popmart AutoBot</h2>
-            <p>V6.0 (Proven Logic)</p>
+            <p>V7.0 (Definitive Version)</p>
         </div>
 
         <div class="form-group">
@@ -60,19 +55,17 @@
                 <option>Central Phuket</option>
             </select>
         </div>
-
         <div class="form-group">
             <label for="date">วันที่ (Date)</label>
             <input type="date" id="date" />
         </div>
-
         <div class="form-group">
             <label for="time">เวลา (Time)</label>
             <select id="time"></select>
         </div>
 
         <button onclick="saveSettings()">Save Settings</button>
-        <button class="main-button" onclick="generateBookmarklet()">🚀 Copy AutoBot</button>
+        <button class="main-button" onclick="generateBookmarklet()">🚀 Copy AutoBot V7</button>
         <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet code will appear here..."></textarea>
     </div>
 
@@ -86,7 +79,7 @@
         }
         timeSelect.appendChild(new Option("21:00"));
 
-        const configKey = "popmartBotConfig_v6";
+        const configKey = "popmartBotConfig_v7";
         window.onload = () => {
             const config = JSON.parse(localStorage.getItem(configKey)) || {};
             document.getElementById("branch").value = config.targetBranch || "Centralworld";
@@ -114,7 +107,7 @@
 (() => {
     if (document.getElementById('bot-status-indicator')) return;
 
-    // --- ส่วนเสริม: UI แสดงสถานะ ---
+    // --- ส่วนเสริม UI ---
     const createStatusIndicator = () => {
         const el = document.createElement('div'); el.id = 'bot-status-indicator';
         const style = document.createElement('style');
@@ -123,12 +116,15 @@
     };
     const updateStatus = (text) => { const el = document.getElementById('bot-status-indicator'); if (el) el.innerHTML = text; };
     createStatusIndicator();
-    // --- จบส่วนเสริม ---
+    // --- จบส่วนเสริม UI ---
 
     const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
     updateStatus('🚀 Bot Starting...');
 
-    // ✅✅✅ เริ่มส่วน Logic หลักจากโค้ดที่คุณให้มา ✅✅✅
+    // ==================================================================
+    // ✅✅✅ LOGIC ทั้งหมดจาก V1.15 ที่ทำงานได้ 100% ✅✅✅
+    // ==================================================================
+    
     const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
         const start = Date.now();
         const loop = setInterval(() => {
@@ -139,12 +135,23 @@
     };
 
     const isClickable = (el) => el && !el.disabled && getComputedStyle(el).pointerEvents !== "none" && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none";
-    const forceClick = (el) => { if(el) { try { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (err) { updateStatus("❌ Click Error"); } } };
+
+    const forceClick = (el) => {
+        if (!el) return;
+        try { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (err) { updateStatus("❌ Click Error"); }
+    };
+
     const findButtonFlexible = (label) => {
         const target = label.toLowerCase();
         return [...document.querySelectorAll("button, div, span")].find((el) => {
             const text = el.innerText?.replace(/\\n/g, "").trim().toLowerCase() || "";
-            if (isClickable(el) && el.offsetWidth > 0 && el.offsetHeight > 0 && text.includes(target)) return el;
+            const className = el.className?.toLowerCase() || "";
+            const tag = el.tagName?.toLowerCase();
+            const clickable = isClickable(el);
+            const isVisible = el.offsetWidth > 0 && el.offsetHeight > 0;
+            const isLikelyButton = (tag === "button" || el.children.length === 0);
+            const looksLikeTarget = text === target || text.includes(target) || className.includes(target);
+            if (clickable && isVisible && isLikelyButton && looksLikeTarget) return el;
             return null;
         });
     };
@@ -152,16 +159,16 @@
     const waitForCountdownToFinish = (callback) => {
         updateStatus("⏳ Waiting for Countdown...");
         const loop = setInterval(() => {
-            const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
+            const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.replace(/\\n/g, "").trim()?.match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
             if (!countdownEl) {
-                updateStatus("✅ No countdown found, proceeding...");
+                updateStatus("✅ No countdown, proceeding...");
                 clearInterval(loop); callback(); return;
             }
-            const text = countdownEl.innerText.trim();
-            const numbersOnly = text.replace(/[^0-9]/g, '');
-            const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
+            const text = countdownEl.innerText.replace(/\\n/g, "").trim();
+            const timeParts = text.split(":").map((t) => parseInt(t.trim()) || 0);
+            const isZero = timeParts.every((t) => t === 0);
             if (isZero) {
-                updateStatus("✅ Countdown finished!");
+                updateStatus("✅ Countdown Finished!");
                 clearInterval(loop); callback();
             } else {
                 updateStatus(\`⏳ Countdown: \${text}\`);
@@ -193,10 +200,7 @@
 
     const startFromNext = () => {
         updateStatus("➡️ Clicking Next...");
-        waitFor(() => findButtonFlexible("next"), (nextBtn) => {
-            forceClick(nextBtn);
-            startFromSelectDay();
-        });
+        waitFor(() => findButtonFlexible("next"), (nextBtn) => { forceClick(nextBtn); startFromSelectDay(); });
     };
 
     const startFromBranch = () => {
@@ -213,7 +217,7 @@
         });
     };
 
-    // ✅ STARTING LOGIC (From your working version)
+    // ✅ STARTING LOGIC FROM V1.15 (The one that works!)
     if (document.querySelector("button.timeButtons, button.time-btn")) {
         updateStatus("⏩ Found Time Selection");
         startFromSelectTime();
@@ -226,12 +230,11 @@
     } else {
         waitForCountdownToFinish(startFromRegister);
     }
-    // ✅✅✅ จบส่วน Logic หลัก ✅✅✅
 })();`;
             document.getElementById("bookmarkletOutput").value = "javascript:" + encodeURIComponent(payload);
             document.getElementById("bookmarkletOutput").select();
             document.execCommand("copy");
-            alert("📋 คัดลอก AutoBot แล้ว! (Proven Logic + New UI)");
+            alert("📋 คัดลอก AutoBot V7 แล้ว!");
         }
     </script>
 </body>
