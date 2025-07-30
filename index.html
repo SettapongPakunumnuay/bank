@@ -31,15 +31,15 @@
 <body>
   <div class="container">
     <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V4.0 (Fixed Start Logic)</h2>
+    <h2>Popmart AutoBot V5.0 (Final Countdown Fix)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
-      <option>Terminal 21</option> <option>Central Ladprao</option> <option>Fashion Island</option>
-      <option>Centralworld</option> <option>MEGABANGNA</option> <option>Siam Square</option>
-      <option>Central Pattaya</option> <option>Seacon Square</option> <option>Central Westgate</option>
-      <option>Central Chiangmai</option> <option>Iconsiam</option> <option>Central Rama 3</option>
-      <option>Central Rama 2</option> <option>Central Pinklao</option> <option>Central Rattanathibet</option>
+      <option>Terminal 21</option><option>Central Ladprao</option><option>Fashion Island</option>
+      <option>Centralworld</option><option>MEGABANGNA</option><option>Siam Square</option>
+      <option>Central Pattaya</option><option>Seacon Square</option><option>Central Westgate</option>
+      <option>Central Chiangmai</option><option>Iconsiam</option><option>Central Rama 3</option>
+      <option>Central Rama 2</option><option>Central Pinklao</option><option>Central Rattanathibet</option>
       <option>Central Phuket</option>
     </select>
 
@@ -64,7 +64,7 @@
     }
     timeSelect.appendChild(new Option("21:00"));
 
-    const configKey = "popmartBotConfig_v4";
+    const configKey = "popmartBotConfig_v5";
     window.onload = () => {
       const config = JSON.parse(localStorage.getItem(configKey)) || {};
       document.getElementById("branch").value = config.targetBranch || "Centralworld";
@@ -161,21 +161,29 @@
       startFromBranch();
     });
   };
-  const waitForCountdown = (callback) => {
+  
+  // *** NEW ROBUST COUNTDOWN LOGIC ***
+  const startBotFlow = () => {
     updateStatus("⏳ Waiting for Countdown...");
-    const loop = setInterval(() => {
-      const countdownEl = [...document.querySelectorAll("div,span,p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
-      if (!countdownEl) { clearInterval(loop); callback(); return; }
-      const numbersOnly = countdownEl.innerText.replace(/[^0-9]/g, '');
-      if (numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0) {
-        clearInterval(loop); updateStatus('✅ Countdown Finished!'); callback();
+    waitFor(() => {
+        const countdownEl = [...document.querySelectorAll("div,span,p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
+        if (!countdownEl) return false; // ไม่เจอ ให้รอต่อไป
+        
+        const text = countdownEl.innerText.trim();
+        updateStatus(\`⏳ Countdown: \${text}\`); // อัปเดตสถานะด้วยเวลาที่เจอ
+        
+        const numbersOnly = text.replace(/[^0-9]/g, '');
+        return numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0; // คืนค่า true เมื่อเป็นศูนย์เท่านั้น
+      }, 
+      () => { // Callback function fires only when countdown is zero
+        updateStatus('✅ Countdown Finished!');
+        startFromRegister();
       }
-    }, 300);
+    );
   };
 
-  // ✅ NEW & IMPROVED STARTING LOGIC
+  // ✅ STARTING LOGIC
   const registerButton = [...document.querySelectorAll("button")].find(b => b.innerText.toLowerCase().includes('register'));
-
   if (document.querySelector(".time-btn, .timeButtons")) {
     updateStatus("⏩ Found Time Selection");
     startFromSelectTime();
@@ -186,13 +194,14 @@
     updateStatus("⏩ Found Branch Selection");
     startFromBranch();
   } else {
-    waitForCountdown(startFromRegister);
+    // เรียกใช้ฟังก์ชันรอ Countdown ตัวใหม่
+    startBotFlow();
   }
 })();`;
       document.getElementById("bookmarkletOutput").value = "javascript:" + encodeURIComponent(payload);
       document.getElementById("bookmarkletOutput").select();
       document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! (V4.0 - Fixed Start Logic)");
+      alert("📋 คัดลอก Bookmarklet แล้ว! (V5.0 - Final Countdown Fix)");
     }
   </script>
 </body>
