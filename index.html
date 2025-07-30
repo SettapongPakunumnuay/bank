@@ -84,8 +84,8 @@
 </head>
 <body>
   <div class="container">
-    <img src="icon.jpg" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V2.3 (Stable)</h2>
+    <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
+    <h2>Popmart AutoBot V2.4 (Fix Countdown)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
@@ -216,24 +216,28 @@
   const waitForCountdownToFinish = (callback) => {
     updateStatus('⏳ กำลังรอ Countdown...');
     const loop = setInterval(() => {
-      const all = [...document.querySelectorAll("div, span, p")];
-      const countdownEl = all.find((el) => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
-      const text = countdownEl?.innerText?.trim();
-      const isZero = text?.startsWith("0:00") || text?.startsWith("00:00");
+        const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
 
-      if (!countdownEl) {
-        updateStatus('✅ ไม่เจอ Countdown, เริ่มทำงานเลย');
-        clearInterval(loop);
-        callback();
-        return;
-      }
-      if (isZero) {
-        clearInterval(loop);
-        updateStatus('✅ Countdown เสร็จสิ้น');
-        callback();
-      } else {
-        updateStatus(\`⏳ รอ Countdown: \${text}\`);
-      }
+        if (!countdownEl) {
+            updateStatus('✅ ไม่เจอ Countdown, เริ่มทำงานเลย');
+            clearInterval(loop);
+            callback();
+            return;
+        }
+
+        const text = countdownEl.innerText.trim();
+        // ** START: แก้ไขการตรวจจับเวลาศูนย์ **
+        const numbersOnly = text.replace(/[^0-9]/g, '');
+        const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
+        // ** END: แก้ไขการตรวจจับเวลาศูนย์ **
+
+        if (isZero) {
+            clearInterval(loop);
+            updateStatus('✅ Countdown เสร็จสิ้น');
+            callback();
+        } else {
+            updateStatus(\`⏳ รอ Countdown: \${text}\`);
+        }
     }, 300);
   };
 
