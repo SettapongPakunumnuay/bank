@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>POP MART Auto Bot V2.0</title>
+  <title>POP MART Auto Bot</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 360px; margin: auto; padding: 20px; }
     img { width: 100px; display: block; margin: 0 auto 10px; }
@@ -16,7 +16,7 @@
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>POP MART AutoBot By Bank V2.0</h2>
+  <h2>Popmart AutoBot by bankkkiizz V1.2 iOS</h2>
 
   <label>Branch</label>
   <select id="branch">
@@ -87,7 +87,6 @@ function generateBookmarklet() {
     targetDate: document.getElementById("date").value,
     targetTime: document.getElementById("time").value
   };
-
   const payload = `(function(){
     if (!confirm("ยืนยันเริ่มทำงาน?")) return;
     const cfg = ${JSON.stringify(config)};
