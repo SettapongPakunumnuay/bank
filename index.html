@@ -61,15 +61,6 @@
     button:hover {
       background: #c0000f;
     }
-    #autoRunLabel {
-      display: flex;
-      align-items: center;
-      margin-top: 20px;
-    }
-    #autoRun {
-      width: auto;
-      margin-right: 10px;
-    }
     textarea {
       margin-top: 20px;
       width: 100%;
@@ -85,7 +76,7 @@
 <body>
   <div class="container">
     <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V2.5 (Final Fix)</h2>
+    <h2>Popmart AutoBot V3 (Extension Logic)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
@@ -113,8 +104,6 @@
     <label for="time">เวลา (Time)</label>
     <select id="time"></select>
 
-    <label id="autoRunLabel"><input type="checkbox" id="autoRun" /> เปิด/ปิดการทำงานอัตโนมัติ</label>
-
     <button onclick="saveSettings()">Save Settings</button>
     <button onclick="generateBookmarklet()">Copy Bookmarklet</button>
 
@@ -137,7 +126,6 @@
       document.getElementById("branch").value = config.targetBranch || "Centralworld";
       document.getElementById("date").value = config.targetDate || new Date().toISOString().split('T')[0];
       document.getElementById("time").value = config.targetTime || "12:00";
-      document.getElementById("autoRun").checked = config.autoRun || false;
     };
 
     function saveSettings() {
@@ -145,7 +133,6 @@
         targetBranch: document.getElementById("branch").value,
         targetDate: document.getElementById("date").value,
         targetTime: document.getElementById("time").value,
-        autoRun: document.getElementById("autoRun").checked
       };
       localStorage.setItem("popmartBotConfig", JSON.stringify(config));
       alert("✅ Settings Saved!");
@@ -163,29 +150,27 @@
   if (document.getElementById('bot-status-indicator')) return;
 
   const createStatusIndicator = () => {
-    const indicatorDiv = document.createElement('div');
-    indicatorDiv.id = 'bot-status-indicator';
+    const el = document.createElement('div');
+    el.id = 'bot-status-indicator';
     const style = document.createElement('style');
     style.innerHTML = \`
       #bot-status-indicator {
         position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-        background-color: rgba(29, 31, 33, 0.95); color: white;
-        padding: 12px 24px; border-radius: 10px; font-family: sans-serif;
-        font-size: 16px; font-weight: 600; z-index: 999999;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: flex;
-        align-items: center; gap: 12px; transition: all 0.3s;
+        background: rgba(0,0,0,0.8); color: white; padding: 12px 20px;
+        border-radius: 10px; font-family: sans-serif; font-size: 16px;
+        z-index: 99999; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       }
     \`;
     document.head.appendChild(style);
-    document.body.appendChild(indicatorDiv);
+    document.body.appendChild(el);
   };
   const updateStatus = (text) => {
     const el = document.getElementById('bot-status-indicator');
     if (el) el.innerHTML = text;
   };
   createStatusIndicator();
-
   updateStatus('🚀 บอทเริ่มทำงาน');
+
   const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
 
   const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
@@ -195,114 +180,106 @@
       if (result) {
         clearInterval(loop); callback(result);
       } else if (Date.now() - start > timeout) {
-        clearInterval(loop); updateStatus('❌ Timeout: หา Element ไม่เจอ');
+        clearInterval(loop); updateStatus("⏱ Timeout: หา Element ไม่เจอ");
       }
     }, interval);
   };
 
-  const isClickable = (el) => el && !el.disabled && getComputedStyle(el).pointerEvents !== 'none' && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
-  const forceClick = (el) => { if (el) { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); } };
+  const isClickable = (el) => el && !el.disabled && getComputedStyle(el).pointerEvents !== "none" && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none";
+  
+  const forceClick = (el) => {
+    if (!el) return;
+    try { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (e) { updateStatus("❌ Click ไม่สำเร็จ"); }
+  };
+  
   const findButtonFlexible = (label) => {
     const target = label.toLowerCase();
     return [...document.querySelectorAll("button, div, span")].find((el) => {
-      const text = el.innerText?.trim().toLowerCase() || "";
-      if (isClickable(el) && el.offsetWidth > 0 && el.offsetHeight > 0 && text.includes(target)) {
-        return el;
-      }
+      const text = el.innerText?.replace(/\\n/g, "").trim().toLowerCase() || "";
+      const isVisible = el.offsetWidth > 0 && el.offsetHeight > 0;
+      const looksLikeTarget = text.includes(target);
+      if (isClickable(el) && isVisible && looksLikeTarget) return el;
       return null;
     });
   };
-
+  
   const waitForCountdownToFinish = (callback) => {
-    updateStatus('⏳ กำลังรอ Countdown...');
+    updateStatus("⏳ กำลังรอ Countdown...");
     const loop = setInterval(() => {
-        const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
+      const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
+      if (!countdownEl) {
+        clearInterval(loop); callback(); return;
+      }
+      const text = countdownEl.innerText.trim();
+      const numbersOnly = text.replace(/[^0-9]/g, '');
+      const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
 
-        if (!countdownEl) {
-            updateStatus('✅ ไม่เจอ Countdown, เริ่มทำงานเลย');
-            clearInterval(loop);
-            callback();
-            return;
-        }
-
-        const text = countdownEl.innerText.trim();
-        const numbersOnly = text.replace(/[^0-9]/g, '');
-        const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
-
-        if (isZero) {
-            clearInterval(loop);
-            updateStatus('✅ Countdown เสร็จสิ้น');
-            callback();
-        } else {
-            updateStatus(\`⏳ รอ Countdown: \${text}\`);
-        }
+      if (isZero) {
+        clearInterval(loop); updateStatus("✅ Countdown เสร็จสิ้น"); callback();
+      } else {
+        updateStatus(\`⏳ รอ Countdown: \${text}\`);
+      }
     }, 300);
   };
 
   const startFromConfirm = () => {
-    updateStatus('✅ กำลังกดยืนยัน...');
+    updateStatus("✅ กำลังยืนยัน...");
     waitFor(() => findButtonFlexible("confirm"), (confirmBtn) => {
       forceClick(confirmBtn);
-      updateStatus('🎉 สำเร็จ!');
-      setTimeout(() => { document.getElementById('bot-status-indicator')?.remove(); }, 3000);
+      updateStatus("🎉 สำเร็จ!");
+      setTimeout(() => document.getElementById('bot-status-indicator')?.remove(), 3000);
     });
   };
-
+  
   const startFromSelectTime = () => {
     updateStatus(\`🕒 กำลังเลือกเวลา: \${targetTime}\`);
     waitFor(() => [...document.querySelectorAll("button.timeButtons, button.time-btn")].find(btn => btn.innerText.trim() === targetTime && isClickable(btn)),
     (timeBtn) => { setTimeout(() => { forceClick(timeBtn); startFromConfirm(); }, 300); });
   };
   
-  // ** START: แก้ไขการเลือกวันที่ **
   const startFromSelectDay = () => {
     const day = new Date(targetDate).getDate().toString();
     updateStatus(\`📅 กำลังเลือกวันที่: \${day}\`);
-    waitFor(() => {
-        // ค้นหาด้วย ID แบบเจาะจงก่อน (วิธีเดิมที่ได้ผล)
-        const elById = document.getElementById("day" + day);
-        if (elById && isClickable(elById)) {
-          return elById;
-        }
-        // หากไม่เจอ ให้ใช้วิธีค้นหาแบบทั่วไปเป็นทางเลือกสำรอง
-        return [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")]
-            .find(el => el.innerText.trim() === day && isClickable(el) && !el.classList.contains("day-selected"));
-    },
-    (dayEl) => {
-        forceClick(dayEl);
-        startFromSelectTime();
-    });
+    waitFor(() => [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && isClickable(el)),
+    (dayEl) => { forceClick(dayEl); startFromSelectTime(); });
   };
-  // ** END: แก้ไขการเลือกวันที่ **
-
+  
   const startFromNext = () => {
-    updateStatus('➡️ กำลังกด Next...');
+    updateStatus("➡️ กำลังกด Next...");
     waitFor(() => findButtonFlexible("next"), (nextBtn) => { forceClick(nextBtn); startFromSelectDay(); });
   };
-
+  
   const startFromBranch = () => {
     updateStatus(\`🏢 กำลังเลือกสาขา: \${targetBranch}\`);
     waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.trim().includes(targetBranch.trim()) && !el.classList.contains("full")),
     (branchEl) => { forceClick(branchEl); startFromNext(); });
   };
-
+  
   const startFromRegister = () => {
-    updateStatus('🔍 กำลังค้นหาปุ่ม Register...');
+    updateStatus("🔍 กำลังหาปุ่ม Register...");
     waitFor(() => findButtonFlexible("register"), (registerBtn) => { forceClick(registerBtn); startFromBranch(); });
   };
 
-  // ✅ CORRECTED STARTING LOGIC
+  // ✅ STARTING LOGIC FROM EXTENSION
   if (document.querySelector("button.timeButtons, button.time-btn")) {
     updateStatus("⏩ อยู่หน้าเลือกเวลาแล้ว");
     startFromSelectTime();
-  } else if (document.querySelector("button[role='gridcell'], .calendar-cell, [id^='day']")) {
+  } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
     updateStatus("⏩ อยู่หน้าเลือกวันแล้ว");
     startFromSelectDay();
   } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
     updateStatus("⏩ อยู่หน้าเลือกสาขาแล้ว");
     startFromBranch();
   } else {
-    waitForCountdownToFinish(startFromRegister);
+    waitForCountdownToFinish(() => {
+      // ตรวจสอบอีกครั้งหลัง Countdown เสร็จ
+      if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
+        updateStatus("⏩ Post-countdown: อยู่หน้าเลือกสาขาแล้ว");
+        startFromBranch();
+      } else {
+        startFromRegister();
+      }
+    });
   }
 })();`;
 
@@ -311,7 +288,7 @@
       output.value = bookmarklet;
       output.select();
       document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! (เวอร์ชัน Final Fix)");
+      alert("📋 คัดลอก Bookmarklet แล้ว! (จาก Logic ของ Extension)");
     }
   </script>
 </body>
