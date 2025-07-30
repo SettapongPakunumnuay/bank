@@ -39,9 +39,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="icon.jpg" alt="POP MART Logo" />
-            <h2>Popmart AutoBot By Bank</h2>
-            <p>V7.0 (Definitive Version)</p>
+            <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
+            <h2>Popmart AutoBot</h2>
+            <p>V9.0 (All-in-One)</p>
         </div>
 
         <div class="form-group">
@@ -65,7 +65,7 @@
         </div>
 
         <button onclick="saveSettings()">Save Settings</button>
-        <button class="main-button" onclick="generateBookmarklet()">🚀 Copy AutoBot V7</button>
+        <button class="main-button" onclick="generateBookmarklet()">🚀 Copy AutoBot V9</button>
         <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet code will appear here..."></textarea>
     </div>
 
@@ -79,7 +79,7 @@
         }
         timeSelect.appendChild(new Option("21:00"));
 
-        const configKey = "popmartBotConfig_v7";
+        const configKey = "popmartBotConfig_v9";
         window.onload = () => {
             const config = JSON.parse(localStorage.getItem(configKey)) || {};
             document.getElementById("branch").value = config.targetBranch || "Centralworld";
@@ -107,7 +107,7 @@
 (() => {
     if (document.getElementById('bot-status-indicator')) return;
 
-    // --- ส่วนเสริม UI ---
+    // --- UI Functions ---
     const createStatusIndicator = () => {
         const el = document.createElement('div'); el.id = 'bot-status-indicator';
         const style = document.createElement('style');
@@ -116,13 +116,13 @@
     };
     const updateStatus = (text) => { const el = document.getElementById('bot-status-indicator'); if (el) el.innerHTML = text; };
     createStatusIndicator();
-    // --- จบส่วนเสริม UI ---
+    updateStatus('🚀 Bot Starting...');
+    // --- End UI Functions ---
 
     const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
-    updateStatus('🚀 Bot Starting...');
-
+    
     // ==================================================================
-    // ✅✅✅ LOGIC ทั้งหมดจาก V1.15 ที่ทำงานได้ 100% ✅✅✅
+    // ✅✅✅ ALL-IN-ONE LOGIC ✅✅✅
     // ==================================================================
     
     const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
@@ -143,12 +143,14 @@
 
     const findButtonFlexible = (label) => {
         const target = label.toLowerCase();
-        return [...document.querySelectorAll("button, div, span")].find((el) => {
+        // ⭐ UPDATED: Search ALL elements (*) for maximum compatibility ⭐
+        return [...document.querySelectorAll("*")].find((el) => {
             const text = el.innerText?.replace(/\\n/g, "").trim().toLowerCase() || "";
             const className = el.className?.toLowerCase() || "";
             const tag = el.tagName?.toLowerCase();
             const clickable = isClickable(el);
             const isVisible = el.offsetWidth > 0 && el.offsetHeight > 0;
+            // Only consider elements that are buttons OR have no children (leaf nodes)
             const isLikelyButton = (tag === "button" || el.children.length === 0);
             const looksLikeTarget = text === target || text.includes(target) || className.includes(target);
             if (clickable && isVisible && isLikelyButton && looksLikeTarget) return el;
@@ -159,16 +161,16 @@
     const waitForCountdownToFinish = (callback) => {
         updateStatus("⏳ Waiting for Countdown...");
         const loop = setInterval(() => {
-            const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.replace(/\\n/g, "").trim()?.match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
+            const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
             if (!countdownEl) {
                 updateStatus("✅ No countdown, proceeding...");
                 clearInterval(loop); callback(); return;
             }
-            const text = countdownEl.innerText.replace(/\\n/g, "").trim();
+            const text = countdownEl.innerText.trim();
             const timeParts = text.split(":").map((t) => parseInt(t.trim()) || 0);
             const isZero = timeParts.every((t) => t === 0);
             if (isZero) {
-                updateStatus("✅ Countdown Finished!");
+                updateStatus("✅ Countdown finished!");
                 clearInterval(loop); callback();
             } else {
                 updateStatus(\`⏳ Countdown: \${text}\`);
@@ -194,7 +196,7 @@
     const startFromSelectDay = () => {
         const day = new Date(targetDate).getDate().toString();
         updateStatus(\`📅 Selecting Day: \${day}\`);
-        waitFor(() => [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && isClickable(el)),
+        waitFor(() => [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable, .MuiPickersDay-root")].find(el => el.innerText.trim() === day && isClickable(el)),
         (dayEl) => { forceClick(dayEl); startFromSelectTime(); });
     };
 
@@ -217,11 +219,11 @@
         });
     };
 
-    // ✅ STARTING LOGIC FROM V1.15 (The one that works!)
+    // ✅ UNIVERSAL STARTING LOGIC
     if (document.querySelector("button.timeButtons, button.time-btn")) {
         updateStatus("⏩ Found Time Selection");
         startFromSelectTime();
-    } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
+    } else if (document.querySelector("button[role='gridcell'], .calendar-cell, .MuiPickersDay-root")) {
         updateStatus("⏩ Found Calendar");
         startFromSelectDay();
     } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
@@ -234,7 +236,7 @@
             document.getElementById("bookmarkletOutput").value = "javascript:" + encodeURIComponent(payload);
             document.getElementById("bookmarkletOutput").select();
             document.execCommand("copy");
-            alert("📋 คัดลอก 🚀 AutoBot แล้ว!");
+            alert("📋 คัดลอก AutoBot V9 แล้ว!");
         }
     </script>
 </body>
