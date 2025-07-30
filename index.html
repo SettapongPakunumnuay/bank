@@ -5,18 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>POP MART Auto Bot</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 360px; margin: auto; padding: 20px; }
-    img { width: 100px; display: block; margin: 0 auto 10px; }
-    h2 { font-size: 18px; text-align: center; }
-    label { display: block; margin-top: 10px; }
-    select, input[type="date"] { width: 100%; padding: 6px; margin-top: 4px; }
-    button { background: #e60012; color: white; width: 100%; padding: 10px; margin-top: 15px; font-weight: bold; border: none; cursor: pointer; }
-    textarea { margin-top: 10px; width: 100%; height: 140px; font-size: 12px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 360px;
+      margin: auto;
+      padding: 20px;
+    }
+    img {
+      width: 100px;
+      display: block;
+      margin: 0 auto 10px;
+    }
+    h2 {
+      font-size: 18px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    select, input[type="date"] {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    button {
+      background: #e60012;
+      color: white;
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+    textarea {
+      margin-top: 10px;
+      width: 100%;
+      height: 140px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>Popmart AutoBot by bankkkiizz V1.2 iOS</h2>
+  <h2>Popmart AutoBot by bankkkiizz V1.15</h2>
 
   <label>Branch</label>
   <select id="branch">
@@ -51,87 +84,225 @@
 
   <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet จะถูกสร้างที่นี่..."></textarea>
 
-<script>
-const timeSelect = document.getElementById("time");
-for (let hour = 10; hour <= 20; hour++) {
-  ["30", "00"].forEach((m, i) => {
-    if (hour === 10 && i === 0) return;
-    const h = hour.toString().padStart(2, "0");
-    timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
-  });
-}
-timeSelect.appendChild(new Option("21:00", "21:00"));
+  <script>
+    const timeSelect = document.getElementById("time");
+    for (let hour = 10; hour <= 20; hour++) {
+      ["30", "00"].forEach((m, i) => {
+        if (hour === 10 && i === 0) return;
+        const h = hour.toString().padStart(2, "0");
+        timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
+      });
+    }
+    timeSelect.appendChild(new Option("21:00", "21:00"));
 
-window.onload = () => {
-  const config = JSON.parse(localStorage.getItem("config")) || {};
-  document.getElementById("branch").value = config.targetBranch || "";
-  document.getElementById("date").value = config.targetDate || "";
-  document.getElementById("time").value = config.targetTime || "";
-  document.getElementById("autoRun").checked = config.autoRun || false;
-};
-
-function saveSettings() {
-  const config = {
-    targetBranch: document.getElementById("branch").value,
-    targetDate: document.getElementById("date").value,
-    targetTime: document.getElementById("time").value,
-    autoRun: document.getElementById("autoRun").checked
-  };
-  localStorage.setItem("config", JSON.stringify(config));
-  alert("✅ Settings Saved");
-}
-
-function generateBookmarklet() {
-  const config = {
-    targetBranch: document.getElementById("branch").value,
-    targetDate: document.getElementById("date").value,
-    targetTime: document.getElementById("time").value
-  };
-  const payload = `(function(){
-    if (!confirm("ยืนยันเริ่มทำงาน?")) return;
-    const cfg = ${JSON.stringify(config)};
-    const waitFor = (check, cb, interval=300, timeout=1800000) => {
-      const start = Date.now();
-      const loop = setInterval(() => {
-        const el = check();
-        if (el) { clearInterval(loop); cb(el); }
-        else if (Date.now() - start > timeout) { clearInterval(loop); console.warn("Timeout"); }
-      }, interval);
+    window.onload = () => {
+      const config = JSON.parse(localStorage.getItem("config")) || {};
+      document.getElementById("branch").value = config.targetBranch || "";
+      document.getElementById("date").value = config.targetDate || "";
+      document.getElementById("time").value = config.targetTime || "";
+      document.getElementById("autoRun").checked = config.autoRun || false;
     };
-    const isClickable = el => el && !el.disabled && getComputedStyle(el).pointerEvents !== "none" && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none";
-    const forceClick = el => { if (el) { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); }};
 
-    const findBtn = label => [...document.querySelectorAll("button,div,span")].find(el => {
-      const txt = el.innerText?.replace(/\n/g,"").trim().toLowerCase();
-      const cls = el.className?.toLowerCase() || "";
-      return isClickable(el) && (txt === label || txt?.includes(label) || cls.includes(label));
+    function saveSettings() {
+      const config = {
+        targetBranch: document.getElementById("branch").value,
+        targetDate: document.getElementById("date").value,
+        targetTime: document.getElementById("time").value,
+        autoRun: document.getElementById("autoRun").checked
+      };
+      localStorage.setItem("config", JSON.stringify(config));
+      alert("✅ Settings Saved");
+    }
+
+    function generateBookmarklet() {
+      const config = {
+        targetBranch: document.getElementById("branch").value,
+        targetDate: document.getElementById("date").value,
+        targetTime: document.getElementById("time").value
+      };
+
+      // Payload is now the advanced script from your Chrome extension
+      const payload = `
+(() => {
+  if (!confirm("ยืนยันการเริ่มทำงานของบอท?")) return;
+
+  const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
+  console.log("🤖 Running bot with config:", { targetBranch, targetDate, targetTime });
+
+  const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
+    const start = Date.now();
+    const loop = setInterval(() => {
+      const result = checkFn();
+      if (result) {
+        clearInterval(loop);
+        callback(result);
+      } else if (Date.now() - start > timeout) {
+        clearInterval(loop);
+        console.warn("⏱ Timeout: Element not found");
+      }
+    }, interval);
+  };
+
+  const isClickable = (el) =>
+    el &&
+    !el.disabled &&
+    getComputedStyle(el).pointerEvents !== "none" &&
+    getComputedStyle(el).visibility !== "hidden" &&
+    getComputedStyle(el).display !== "none";
+
+  const forceClick = (el) => {
+    if (!el) return;
+    try {
+      el.focus();
+      el.click();
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    } catch (err) {
+      console.warn("❌ Failed to forceClick:", err);
+    }
+  };
+
+  const findButtonFlexible = (label) => {
+    const target = label.toLowerCase();
+    return [...document.querySelectorAll("button, div, span")].find((el) => {
+      const text = el.innerText?.replace(/\\n/g, "").trim().toLowerCase() || "";
+      const className = el.className?.toLowerCase() || "";
+      const tag = el.tagName?.toLowerCase();
+      const clickable = isClickable(el);
+      const isVisible = el.offsetWidth > 0 && el.offsetHeight > 0;
+      const isLikelyButton = (tag === "button" || el.children.length === 0);
+      const looksLikeTarget = text === target || text.includes(target) || className.includes(target);
+      if (clickable && isVisible && isLikelyButton && looksLikeTarget) {
+        console.log(\`🔍 Found '\${label}' button:\`, el);
+        return el;
+      }
+      return null;
     });
+  };
 
-    const step = {
-      confirm: () => waitFor(() => findBtn("confirm"), forceClick),
-      time: () => waitFor(() => [...document.querySelectorAll(".time-btn, .timeButtons")].find(btn => btn.innerText.trim() === cfg.targetTime && isClickable(btn)), btn => { forceClick(btn); setTimeout(step.confirm, 300); }),
-      day: () => {
-        const d = new Date(cfg.targetDate).getDate().toString();
-        waitFor(() => [...document.querySelectorAll("[role='gridcell'], .calendar-cell")].find(el => el.innerText.trim() === d && isClickable(el)), el => { forceClick(el); step.time(); });
+  const waitForCountdownToFinish = (callback) => {
+    const loop = setInterval(() => {
+      const all = [...document.querySelectorAll("div, span, p")];
+      const countdownEl = all.find((el) =>
+        el.innerText?.replace(/\\n/g, "").trim()?.match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/)
+      );
+      const text = countdownEl?.innerText?.replace(/\\n/g, "").trim();
+      const timeParts = text?.split(":").map((t) => parseInt(t.trim()));
+      const isZero = timeParts?.every((t) => t === 0);
+      if (!countdownEl) {
+        console.warn("⏳ Countdown element not found, assuming it finished.");
+        clearInterval(loop);
+        callback();
+        return;
+      }
+      if (isZero) {
+        clearInterval(loop);
+        console.log("⏳ Countdown reached zero. Continue.");
+        callback();
+      } else {
+        console.log("⏳ Waiting countdown:", text);
+      }
+    }, 300);
+  };
+
+  // ✅ STEP FUNCTIONS
+  const startFromConfirm = () => {
+    waitFor(() => findButtonFlexible("confirm"), (confirmBtn) => {
+      forceClick(confirmBtn);
+      console.log("✅ Clicked Confirm button");
+    });
+  };
+
+  const startFromSelectTime = () => {
+    waitFor(
+      () => {
+        return [...document.querySelectorAll("button.timeButtons, button.time-btn")].find(
+          (btn) => btn.innerText.trim() === targetTime && isClickable(btn)
+        );
       },
-      next: () => waitFor(() => findBtn("next"), el => { forceClick(el); step.day(); }),
-      branch: () => waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.includes(cfg.targetBranch) && !el.classList.contains("full")), el => { forceClick(el); step.next(); }),
-      register: () => waitFor(() => findBtn("register"), el => { forceClick(el); step.branch(); })
-    };
+      (timeBtn) => {
+        setTimeout(() => {
+          forceClick(timeBtn);
+          console.log("🕒 Selected time:", targetTime);
+          startFromConfirm();
+        }, 300);
+      }
+    );
+  };
 
-    if (document.querySelector(".time-btn, .timeButtons")) step.time();
-    else if (document.querySelector("[role='gridcell'], .calendar-cell")) step.day();
-    else if (document.querySelector(".branch-item") && !findBtn("register")) step.branch();
-    else step.register();
-  })();`;
+  const startFromSelectDay = () => {
+    const day = new Date(targetDate).getDate().toString();
+    waitFor(
+      () => {
+        return [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")].find(
+          (el) => el.innerText.trim() === day && isClickable(el)
+        );
+      },
+      (dayEl) => {
+        forceClick(dayEl);
+        console.log("📅 Selected day:", day);
+        startFromSelectTime();
+      }
+    );
+  };
 
-  const bookmarklet = "javascript:" + encodeURIComponent(payload);
-  const output = document.getElementById("bookmarkletOutput");
-  output.value = bookmarklet;
-  output.select();
-  document.execCommand("copy");
-  alert("📋 คัดลอก Bookmarklet แล้ว! วางใน Safari หรือ Browser ได้เลย");
-}
-</script>
+  const startFromNext = () => {
+    waitFor(() => findButtonFlexible("next"), (nextBtn) => {
+      forceClick(nextBtn);
+      console.log("➡️ Clicked Next");
+      startFromSelectDay();
+    });
+  };
+
+  const startFromBranch = () => {
+    waitFor(
+      () => {
+        return [...document.querySelectorAll(".branch-item")].find(
+          (el) =>
+            el.innerText.trim().includes(targetBranch.trim()) &&
+            !el.classList.contains("full")
+        );
+      },
+      (branchEl) => {
+        forceClick(branchEl);
+        console.log("🏢 Selected branch:", targetBranch);
+        startFromNext();
+      }
+    );
+  };
+
+  const startFromRegister = () => {
+    waitFor(() => findButtonFlexible("register"), (registerBtn) => {
+      forceClick(registerBtn);
+      console.log("✅ Clicked Register");
+      startFromBranch();
+    });
+  };
+
+  // ✅ STARTING LOGIC
+  if (document.querySelector("button.timeButtons, button.time-btn")) {
+    console.log("⏩ Already at time selection");
+    startFromSelectTime();
+  } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
+    console.log("⏩ Already at day selection");
+    startFromSelectDay();
+  } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
+    console.log("⏩ Already at branch selection (after Register)");
+    startFromBranch();
+  } else {
+    console.log("⏳ Checking for countdown before starting...");
+    waitForCountdownToFinish(() => {
+        startFromRegister();
+    });
+  }
+})();`;
+
+      const bookmarklet = "javascript:" + encodeURIComponent(payload);
+      const output = document.getElementById("bookmarkletOutput");
+      output.value = bookmarklet;
+      output.select();
+      document.execCommand("copy");
+      alert("📋 คัดลอก Bookmarklet แล้ว! วางใน Safari หรือ Browser ได้เลย");
+    }
+  </script>
 </body>
 </html>
