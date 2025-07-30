@@ -85,7 +85,7 @@
 <body>
   <div class="container">
     <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V2.4 (Fix Countdown)</h2>
+    <h2>Popmart AutoBot V2.5 (Final Fix)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
@@ -226,10 +226,8 @@
         }
 
         const text = countdownEl.innerText.trim();
-        // ** START: แก้ไขการตรวจจับเวลาศูนย์ **
         const numbersOnly = text.replace(/[^0-9]/g, '');
         const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
-        // ** END: แก้ไขการตรวจจับเวลาศูนย์ **
 
         if (isZero) {
             clearInterval(loop);
@@ -255,13 +253,27 @@
     waitFor(() => [...document.querySelectorAll("button.timeButtons, button.time-btn")].find(btn => btn.innerText.trim() === targetTime && isClickable(btn)),
     (timeBtn) => { setTimeout(() => { forceClick(timeBtn); startFromConfirm(); }, 300); });
   };
-
+  
+  // ** START: แก้ไขการเลือกวันที่ **
   const startFromSelectDay = () => {
     const day = new Date(targetDate).getDate().toString();
     updateStatus(\`📅 กำลังเลือกวันที่: \${day}\`);
-    waitFor(() => [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && isClickable(el)),
-    (dayEl) => { forceClick(dayEl); startFromSelectTime(); });
+    waitFor(() => {
+        // ค้นหาด้วย ID แบบเจาะจงก่อน (วิธีเดิมที่ได้ผล)
+        const elById = document.getElementById("day" + day);
+        if (elById && isClickable(elById)) {
+          return elById;
+        }
+        // หากไม่เจอ ให้ใช้วิธีค้นหาแบบทั่วไปเป็นทางเลือกสำรอง
+        return [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")]
+            .find(el => el.innerText.trim() === day && isClickable(el) && !el.classList.contains("day-selected"));
+    },
+    (dayEl) => {
+        forceClick(dayEl);
+        startFromSelectTime();
+    });
   };
+  // ** END: แก้ไขการเลือกวันที่ **
 
   const startFromNext = () => {
     updateStatus('➡️ กำลังกด Next...');
@@ -283,7 +295,7 @@
   if (document.querySelector("button.timeButtons, button.time-btn")) {
     updateStatus("⏩ อยู่หน้าเลือกเวลาแล้ว");
     startFromSelectTime();
-  } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
+  } else if (document.querySelector("button[role='gridcell'], .calendar-cell, [id^='day']")) {
     updateStatus("⏩ อยู่หน้าเลือกวันแล้ว");
     startFromSelectDay();
   } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
@@ -299,7 +311,7 @@
       output.value = bookmarklet;
       output.select();
       document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! (เวอร์ชันแก้ไข Countdown)");
+      alert("📋 คัดลอก Bookmarklet แล้ว! (เวอร์ชัน Final Fix)");
     }
   </script>
 </body>
