@@ -7,94 +7,39 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 380px;
-      margin: auto;
-      padding: 20px;
-      background-color: #f4f4f5;
+      max-width: 380px; margin: auto; padding: 20px; background-color: #f4f4f5;
     }
     .container {
-      background-color: white;
-      padding: 25px;
-      border-radius: 12px;
+      background-color: white; padding: 25px; border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
-    img {
-      width: 100px;
-      display: block;
-      margin: 0 auto 15px;
-    }
-    h2 {
-      font-size: 20px;
-      text-align: center;
-      color: #111;
-      margin-bottom: 25px;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: 500;
-      color: #333;
-      font-size: 14px;
-    }
-    select, input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      background-color: #fafafa;
-      box-sizing: border-box;
+    img { width: 100px; display: block; margin: 0 auto 15px; }
+    h2 { font-size: 20px; text-align: center; color: #111; margin-bottom: 25px; }
+    label { display: block; margin-top: 15px; font-weight: 500; color: #333; font-size: 14px; }
+    select, input, textarea, button {
+      width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px;
+      border: 1px solid #ddd; box-sizing: border-box; font-size: 16px;
     }
     button {
-      background: #e60012;
-      color: white;
-      width: 100%;
-      padding: 12px;
-      margin-top: 20px;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: 16px;
+      background: #e60012; color: white; font-weight: bold; cursor: pointer;
       transition: background-color 0.2s;
     }
-    button:hover {
-      background: #c0000f;
-    }
-    textarea {
-      margin-top: 20px;
-      width: 100%;
-      height: 120px;
-      font-size: 12px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 10px;
-      box-sizing: border-box;
-    }
+    button:hover { background: #c0000f; }
+    textarea { height: 120px; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V3 (Extension Logic)</h2>
+    <h2>Popmart AutoBot V4.0 (Fixed Start Logic)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
-      <option>Terminal 21</option>
-      <option>Central Ladprao</option>
-      <option>Fashion Island</option>
-      <option>Centralworld</option>
-      <option>MEGABANGNA</option>
-      <option>Siam Square</option>
-      <option>Central Pattaya</option>
-      <option>Seacon Square</option>
-      <option>Central Westgate</option>
-      <option>Central Chiangmai</option>
-      <option>Iconsiam</option>
-      <option>Central Rama 3</option>
-      <option>Central Rama 2</option>
-      <option>Central Pinklao</option>
-      <option>Central Rattanathibet</option>
+      <option>Terminal 21</option> <option>Central Ladprao</option> <option>Fashion Island</option>
+      <option>Centralworld</option> <option>MEGABANGNA</option> <option>Siam Square</option>
+      <option>Central Pattaya</option> <option>Seacon Square</option> <option>Central Westgate</option>
+      <option>Central Chiangmai</option> <option>Iconsiam</option> <option>Central Rama 3</option>
+      <option>Central Rama 2</option> <option>Central Pinklao</option> <option>Central Rattanathibet</option>
       <option>Central Phuket</option>
     </select>
 
@@ -106,7 +51,6 @@
 
     <button onclick="saveSettings()">Save Settings</button>
     <button onclick="generateBookmarklet()">Copy Bookmarklet</button>
-
     <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet code จะแสดงที่นี่..."></textarea>
   </div>
 
@@ -115,26 +59,25 @@
     for (let hour = 10; hour <= 20; hour++) {
       ["30", "00"].forEach((m, i) => {
         if (hour === 10 && i === 0) return;
-        const h = hour.toString().padStart(2, "0");
-        timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
+        timeSelect.appendChild(new Option(`${hour.toString().padStart(2, "0")}:${m}`));
       });
     }
-    timeSelect.appendChild(new Option("21:00", "21:00"));
+    timeSelect.appendChild(new Option("21:00"));
 
+    const configKey = "popmartBotConfig_v4";
     window.onload = () => {
-      const config = JSON.parse(localStorage.getItem("popmartBotConfig")) || {};
+      const config = JSON.parse(localStorage.getItem(configKey)) || {};
       document.getElementById("branch").value = config.targetBranch || "Centralworld";
       document.getElementById("date").value = config.targetDate || new Date().toISOString().split('T')[0];
       document.getElementById("time").value = config.targetTime || "12:00";
     };
-
     function saveSettings() {
       const config = {
         targetBranch: document.getElementById("branch").value,
         targetDate: document.getElementById("date").value,
         targetTime: document.getElementById("time").value,
       };
-      localStorage.setItem("popmartBotConfig", JSON.stringify(config));
+      localStorage.setItem(configKey, JSON.stringify(config));
       alert("✅ Settings Saved!");
     }
 
@@ -144,151 +87,112 @@
         targetDate: document.getElementById("date").value,
         targetTime: document.getElementById("time").value
       };
-
       const payload = `
 (() => {
   if (document.getElementById('bot-status-indicator')) return;
 
+  // --- UI Functions ---
   const createStatusIndicator = () => {
-    const el = document.createElement('div');
-    el.id = 'bot-status-indicator';
+    const el = document.createElement('div'); el.id = 'bot-status-indicator';
     const style = document.createElement('style');
-    style.innerHTML = \`
-      #bot-status-indicator {
-        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.8); color: white; padding: 12px 20px;
-        border-radius: 10px; font-family: sans-serif; font-size: 16px;
-        z-index: 99999; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      }
-    \`;
-    document.head.appendChild(style);
-    document.body.appendChild(el);
+    style.innerHTML = \`#bot-status-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:white;padding:12px 20px;border-radius:10px;font-family:sans-serif;font-size:16px;z-index:99999;box-shadow:0 4px 10px rgba(0,0,0,0.5);text-align:center;}\`;
+    document.head.appendChild(style); document.body.appendChild(el);
   };
-  const updateStatus = (text) => {
-    const el = document.getElementById('bot-status-indicator');
-    if (el) el.innerHTML = text;
-  };
+  const updateStatus = (text) => { const el = document.getElementById('bot-status-indicator'); if (el) el.innerHTML = text; };
   createStatusIndicator();
-  updateStatus('🚀 บอทเริ่มทำงาน');
+  updateStatus('🚀 Bot Starting...');
 
   const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
 
-  const waitFor = (checkFn, callback, interval = 300, timeout = 1800000) => {
+  // --- Core Functions ---
+  const waitFor = (checkFn, cb, interval = 300, timeout = 1800000) => {
     const start = Date.now();
     const loop = setInterval(() => {
       const result = checkFn();
-      if (result) {
-        clearInterval(loop); callback(result);
-      } else if (Date.now() - start > timeout) {
-        clearInterval(loop); updateStatus("⏱ Timeout: หา Element ไม่เจอ");
-      }
+      if (result) { clearInterval(loop); cb(result); }
+      else if (Date.now() - start > timeout) { clearInterval(loop); updateStatus("⏱ Timeout"); }
     }, interval);
   };
+  const isClickable = (el) => el && !el.disabled && getComputedStyle(el).pointerEvents !== 'none' && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
+  const forceClick = (el) => { if(el){el.focus();el.click();el.dispatchEvent(new MouseEvent('click',{bubbles:true}));} };
 
-  const isClickable = (el) => el && !el.disabled && getComputedStyle(el).pointerEvents !== "none" && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none";
-  
-  const forceClick = (el) => {
-    if (!el) return;
-    try { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (e) { updateStatus("❌ Click ไม่สำเร็จ"); }
-  };
-  
-  const findButtonFlexible = (label) => {
-    const target = label.toLowerCase();
-    return [...document.querySelectorAll("button, div, span")].find((el) => {
-      const text = el.innerText?.replace(/\\n/g, "").trim().toLowerCase() || "";
-      const isVisible = el.offsetWidth > 0 && el.offsetHeight > 0;
-      const looksLikeTarget = text.includes(target);
-      if (isClickable(el) && isVisible && looksLikeTarget) return el;
-      return null;
+  // --- Step Functions ---
+  const startFromConfirm = () => {
+    updateStatus('✅ Confirming...');
+    waitFor(() => [...document.querySelectorAll("button")].find(b => b.innerText.toLowerCase().includes('confirm') && isClickable(b)), (btn) => {
+      forceClick(btn);
+      updateStatus('🎉 Success!');
+      setTimeout(() => document.getElementById('bot-status-indicator')?.remove(), 3000);
     });
   };
-  
-  const waitForCountdownToFinish = (callback) => {
-    updateStatus("⏳ กำลังรอ Countdown...");
+  const startFromSelectTime = () => {
+    updateStatus(\`🕒 Selecting Time: \${targetTime}\`);
+    waitFor(() => [...document.querySelectorAll(".time-btn, .timeButtons")].find(b => b.innerText.trim() === targetTime && isClickable(b)), (btn) => {
+      forceClick(btn);
+      startFromConfirm();
+    });
+  };
+  const startFromSelectDay = () => {
+    const day = new Date(targetDate).getDate().toString();
+    updateStatus(\`📅 Selecting Day: \${day}\`);
+    waitFor(() => [...document.querySelectorAll(".calendar-cell, .day-selectable, button[role='gridcell']")].find(b => b.innerText.trim() === day && isClickable(b)), (btn) => {
+      forceClick(btn);
+      startFromSelectTime();
+    });
+  };
+  const startFromNext = () => {
+    updateStatus('➡️ Clicking Next...');
+    waitFor(() => [...document.querySelectorAll("button")].find(b => b.innerText.toLowerCase().includes('next') && isClickable(b)), (btn) => {
+      forceClick(btn);
+      startFromSelectDay();
+    });
+  };
+  const startFromBranch = () => {
+    updateStatus(\`🏢 Selecting Branch: \${targetBranch}\`);
+    waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.includes(targetBranch) && !el.classList.contains("full")), (el) => {
+      forceClick(el);
+      startFromNext();
+    });
+  };
+  const startFromRegister = () => {
+    updateStatus('🔍 Clicking Register...');
+    waitFor(() => [...document.querySelectorAll("button")].find(b => b.innerText.toLowerCase().includes('register') && isClickable(b)), (btn) => {
+      forceClick(btn);
+      startFromBranch();
+    });
+  };
+  const waitForCountdown = (callback) => {
+    updateStatus("⏳ Waiting for Countdown...");
     const loop = setInterval(() => {
-      const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})(\\s*[:]\\s*\\d{1,2}){2,3}$/));
-      if (!countdownEl) {
-        clearInterval(loop); callback(); return;
-      }
-      const text = countdownEl.innerText.trim();
-      const numbersOnly = text.replace(/[^0-9]/g, '');
-      const isZero = numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0;
-
-      if (isZero) {
-        clearInterval(loop); updateStatus("✅ Countdown เสร็จสิ้น"); callback();
-      } else {
-        updateStatus(\`⏳ รอ Countdown: \${text}\`);
+      const countdownEl = [...document.querySelectorAll("div,span,p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
+      if (!countdownEl) { clearInterval(loop); callback(); return; }
+      const numbersOnly = countdownEl.innerText.replace(/[^0-9]/g, '');
+      if (numbersOnly.length > 0 && parseInt(numbersOnly, 10) === 0) {
+        clearInterval(loop); updateStatus('✅ Countdown Finished!'); callback();
       }
     }, 300);
   };
 
-  const startFromConfirm = () => {
-    updateStatus("✅ กำลังยืนยัน...");
-    waitFor(() => findButtonFlexible("confirm"), (confirmBtn) => {
-      forceClick(confirmBtn);
-      updateStatus("🎉 สำเร็จ!");
-      setTimeout(() => document.getElementById('bot-status-indicator')?.remove(), 3000);
-    });
-  };
-  
-  const startFromSelectTime = () => {
-    updateStatus(\`🕒 กำลังเลือกเวลา: \${targetTime}\`);
-    waitFor(() => [...document.querySelectorAll("button.timeButtons, button.time-btn")].find(btn => btn.innerText.trim() === targetTime && isClickable(btn)),
-    (timeBtn) => { setTimeout(() => { forceClick(timeBtn); startFromConfirm(); }, 300); });
-  };
-  
-  const startFromSelectDay = () => {
-    const day = new Date(targetDate).getDate().toString();
-    updateStatus(\`📅 กำลังเลือกวันที่: \${day}\`);
-    waitFor(() => [...document.querySelectorAll("button[role='gridcell'], .calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && isClickable(el)),
-    (dayEl) => { forceClick(dayEl); startFromSelectTime(); });
-  };
-  
-  const startFromNext = () => {
-    updateStatus("➡️ กำลังกด Next...");
-    waitFor(() => findButtonFlexible("next"), (nextBtn) => { forceClick(nextBtn); startFromSelectDay(); });
-  };
-  
-  const startFromBranch = () => {
-    updateStatus(\`🏢 กำลังเลือกสาขา: \${targetBranch}\`);
-    waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.trim().includes(targetBranch.trim()) && !el.classList.contains("full")),
-    (branchEl) => { forceClick(branchEl); startFromNext(); });
-  };
-  
-  const startFromRegister = () => {
-    updateStatus("🔍 กำลังหาปุ่ม Register...");
-    waitFor(() => findButtonFlexible("register"), (registerBtn) => { forceClick(registerBtn); startFromBranch(); });
-  };
+  // ✅ NEW & IMPROVED STARTING LOGIC
+  const registerButton = [...document.querySelectorAll("button")].find(b => b.innerText.toLowerCase().includes('register'));
 
-  // ✅ STARTING LOGIC FROM EXTENSION
-  if (document.querySelector("button.timeButtons, button.time-btn")) {
-    updateStatus("⏩ อยู่หน้าเลือกเวลาแล้ว");
+  if (document.querySelector(".time-btn, .timeButtons")) {
+    updateStatus("⏩ Found Time Selection");
     startFromSelectTime();
-  } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
-    updateStatus("⏩ อยู่หน้าเลือกวันแล้ว");
+  } else if (document.querySelector(".calendar-cell") && !registerButton) {
+    updateStatus("⏩ Found Calendar");
     startFromSelectDay();
-  } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
-    updateStatus("⏩ อยู่หน้าเลือกสาขาแล้ว");
+  } else if (document.querySelector(".branch-item") && !registerButton) {
+    updateStatus("⏩ Found Branch Selection");
     startFromBranch();
   } else {
-    waitForCountdownToFinish(() => {
-      // ตรวจสอบอีกครั้งหลัง Countdown เสร็จ
-      if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
-        updateStatus("⏩ Post-countdown: อยู่หน้าเลือกสาขาแล้ว");
-        startFromBranch();
-      } else {
-        startFromRegister();
-      }
-    });
+    waitForCountdown(startFromRegister);
   }
 })();`;
-
-      const bookmarklet = "javascript:" + encodeURIComponent(payload);
-      const output = document.getElementById("bookmarkletOutput");
-      output.value = bookmarklet;
-      output.select();
+      document.getElementById("bookmarkletOutput").value = "javascript:" + encodeURIComponent(payload);
+      document.getElementById("bookmarkletOutput").select();
       document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! (จาก Logic ของ Extension)");
+      alert("📋 คัดลอก Bookmarklet แล้ว! (V4.0 - Fixed Start Logic)");
     }
   </script>
 </body>
