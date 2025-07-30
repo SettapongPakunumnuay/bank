@@ -3,73 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>POP MART Auto Bot</title>
+  <title>POP MART Auto Bot V2.0</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 360px;
-      margin: auto;
-      padding: 20px;
-    }
-    img {
-      width: 100px;
-      display: block;
-      margin: 0 auto 10px;
-    }
-    h2 {
-      font-size: 18px;
-      text-align: center;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    select, input[type="date"] {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-    }
-    button {
-      background: #e60012;
-      color: white;
-      width: 100%;
-      padding: 10px;
-      margin-top: 15px;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-    textarea {
-      margin-top: 10px;
-      width: 100%;
-      height: 140px;
-      font-size: 12px;
-    }
+    body { font-family: Arial, sans-serif; max-width: 360px; margin: auto; padding: 20px; }
+    img { width: 100px; display: block; margin: 0 auto 10px; }
+    h2 { font-size: 18px; text-align: center; }
+    label { display: block; margin-top: 10px; }
+    select, input[type="date"] { width: 100%; padding: 6px; margin-top: 4px; }
+    button { background: #e60012; color: white; width: 100%; padding: 10px; margin-top: 15px; font-weight: bold; border: none; cursor: pointer; }
+    textarea { margin-top: 10px; width: 100%; height: 140px; font-size: 12px; }
   </style>
 </head>
 <body>
   <img src="icon.jpg" alt="POP MART Logo" />
-  <h2>Popmart AutoBot by bankkkiizz V1.15</h2>
+  <h2>POP MART AutoBot By Bank V2.0</h2>
 
   <label>Branch</label>
-  <select id="branch">
-    <option>Terminal 21</option>
-    <option>Central Ladprao</option>
-    <option>Fashion Island</option>
-    <option>Centralworld</option>
-    <option>MEGABANGNA</option>
-    <option>Siam Square</option>
-    <option>Central Pattaya</option>
-    <option>Seacon Square</option>
-    <option>Central Westgate</option>
-    <option>Central Chiangmai</option>
-    <option>Iconsiam</option>
-    <option>Central Rama 3</option>
-    <option>Central Rama 2</option>
-    <option>Central Pinklao</option>
-    <option>Central Rattanathibet</option>
-    <option>Central Phuket</option>
-  </select>
+  <select id="branch">...</select>
 
   <label>Date</label>
   <input type="date" id="date" />
@@ -84,104 +34,88 @@
 
   <textarea id="bookmarkletOutput" readonly placeholder="Bookmarklet จะถูกสร้างที่นี่..."></textarea>
 
-  <script>
-    const timeSelect = document.getElementById("time");
-    for (let hour = 10; hour <= 20; hour++) {
-      ["30", "00"].forEach((m, i) => {
-        if (hour === 10 && i === 0) return;
-        const h = hour.toString().padStart(2, "0");
-        timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
-      });
-    }
-    timeSelect.appendChild(new Option("21:00", "21:00"));
+<script>
+const timeSelect = document.getElementById("time");
+for (let hour = 10; hour <= 20; hour++) {
+  ["30", "00"].forEach((m, i) => {
+    if (hour === 10 && i === 0) return;
+    const h = hour.toString().padStart(2, "0");
+    timeSelect.appendChild(new Option(`${h}:${m}`, `${h}:${m}`));
+  });
+}
+timeSelect.appendChild(new Option("21:00", "21:00"));
 
-    window.onload = () => {
-      const config = JSON.parse(localStorage.getItem("config")) || {};
-      document.getElementById("branch").value = config.targetBranch || "";
-      document.getElementById("date").value = config.targetDate || "";
-      document.getElementById("time").value = config.targetTime || "";
-      document.getElementById("autoRun").checked = config.autoRun || false;
+window.onload = () => {
+  const config = JSON.parse(localStorage.getItem("config")) || {};
+  document.getElementById("branch").value = config.targetBranch || "";
+  document.getElementById("date").value = config.targetDate || "";
+  document.getElementById("time").value = config.targetTime || "";
+  document.getElementById("autoRun").checked = config.autoRun || false;
+};
+
+function saveSettings() {
+  const config = {
+    targetBranch: document.getElementById("branch").value,
+    targetDate: document.getElementById("date").value,
+    targetTime: document.getElementById("time").value,
+    autoRun: document.getElementById("autoRun").checked
+  };
+  localStorage.setItem("config", JSON.stringify(config));
+  alert("✅ Settings Saved");
+}
+
+function generateBookmarklet() {
+  const config = {
+    targetBranch: document.getElementById("branch").value,
+    targetDate: document.getElementById("date").value,
+    targetTime: document.getElementById("time").value
+  };
+
+  const payload = `(function(){
+    if (!confirm("ยืนยันเริ่มทำงาน?")) return;
+    const cfg = ${JSON.stringify(config)};
+    const waitFor = (check, cb, interval=300, timeout=1800000) => {
+      const start = Date.now();
+      const loop = setInterval(() => {
+        const el = check();
+        if (el) { clearInterval(loop); cb(el); }
+        else if (Date.now() - start > timeout) { clearInterval(loop); console.warn("Timeout"); }
+      }, interval);
+    };
+    const isClickable = el => el && !el.disabled && getComputedStyle(el).pointerEvents !== "none" && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none";
+    const forceClick = el => { if (el) { el.focus(); el.click(); el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); }};
+
+    const findBtn = label => [...document.querySelectorAll("button,div,span")].find(el => {
+      const txt = el.innerText?.replace(/\n/g,"").trim().toLowerCase();
+      const cls = el.className?.toLowerCase() || "";
+      return isClickable(el) && (txt === label || txt?.includes(label) || cls.includes(label));
+    });
+
+    const step = {
+      confirm: () => waitFor(() => findBtn("confirm"), forceClick),
+      time: () => waitFor(() => [...document.querySelectorAll(".time-btn, .timeButtons")].find(btn => btn.innerText.trim() === cfg.targetTime && isClickable(btn)), btn => { forceClick(btn); setTimeout(step.confirm, 300); }),
+      day: () => {
+        const d = new Date(cfg.targetDate).getDate().toString();
+        waitFor(() => [...document.querySelectorAll("[role='gridcell'], .calendar-cell")].find(el => el.innerText.trim() === d && isClickable(el)), el => { forceClick(el); step.time(); });
+      },
+      next: () => waitFor(() => findBtn("next"), el => { forceClick(el); step.day(); }),
+      branch: () => waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.includes(cfg.targetBranch) && !el.classList.contains("full")), el => { forceClick(el); step.next(); }),
+      register: () => waitFor(() => findBtn("register"), el => { forceClick(el); step.branch(); })
     };
 
-    function saveSettings() {
-      const config = {
-        targetBranch: document.getElementById("branch").value,
-        targetDate: document.getElementById("date").value,
-        targetTime: document.getElementById("time").value,
-        autoRun: document.getElementById("autoRun").checked
-      };
-      localStorage.setItem("config", JSON.stringify(config));
-      alert("✅ Settings Saved");
-    }
+    if (document.querySelector(".time-btn, .timeButtons")) step.time();
+    else if (document.querySelector("[role='gridcell'], .calendar-cell")) step.day();
+    else if (document.querySelector(".branch-item") && !findBtn("register")) step.branch();
+    else step.register();
+  })();`;
 
-    function generateBookmarklet() {
-      const config = {
-        targetBranch: document.getElementById("branch").value,
-        targetDate: document.getElementById("date").value,
-        targetTime: document.getElementById("time").value
-      };
-      const payload = `
-(() => {
-  if (!confirm("ยืนยันเริ่มทำงาน?")) return;
-  const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
-  const waitFor = (checkFn, cb, interval = 300, timeout = 1800000) => {
-    const start = Date.now();
-    const loop = setInterval(() => {
-      const el = checkFn();
-      if (el) { clearInterval(loop); cb(el); }
-      else if (Date.now() - start > timeout) { clearInterval(loop); console.warn("⏱ Timeout"); }
-    }, interval);
-  };
-  waitFor(() => [...document.querySelectorAll("button")].find(b => b.innerText.trim() === "Register" && !b.disabled),
-  (registerBtn) => {
-    registerBtn.click(); console.log("✅ Register");
-    waitFor(() => [...document.querySelectorAll(".branch-item")].find(el => el.innerText.includes(targetBranch) && !el.classList.contains("full")),
-    (branchEl) => {
-      branchEl.click(); console.log("🏢 Branch:", targetBranch);
-      waitFor(() => [...document.querySelectorAll("button,div,span")].find(el => {
-        const txt = el.innerText?.trim()?.toLowerCase();
-        return txt === "next" && !el.disabled && !el.classList.contains("disabled") && getComputedStyle(el).pointerEvents !== "none";
-      }), (nextBtn) => {
-        nextBtn.click(); console.log("➡️ Next");
-        const day = new Date(targetDate).getDate().toString();
-        waitFor(() => {
-          const elById = document.getElementById("day" + day);
-          if (elById) return elById;
-          return [...document.querySelectorAll(".calendar-cell, .day-selectable")].find(el => el.innerText.trim() === day && !el.classList.contains("day-selected"));
-        }, (dayEl) => {
-          dayEl.click(); console.log("📅 Day:", day);
-          waitFor(() => [...document.querySelectorAll(".time-btn")].find(btn => btn.innerText.trim() === targetTime && !btn.disabled),
-          (timeBtn) => {
-            setTimeout(() => {
-              timeBtn.click(); console.log("🕒 Time:", targetTime);
-              waitFor(() => {
-  return [...document.querySelectorAll("button")].find(btn =>
-    btn.innerText.trim().toLowerCase() === "confirm" &&
-    btn.offsetParent !== null &&
-    getComputedStyle(btn).visibility !== "hidden" &&
-    getComputedStyle(btn).display !== "none" &&
-    !btn.disabled
-  );
-}, (confirmBtn) => {
-  confirmBtn.click();
-  console.log("✅ Confirm clicked");
-}, 300, 60000);
-
-            }, 300);
-          });
-        });
-      });
-    });
-  });
-})();`;
-
-      const bookmarklet = "javascript:" + encodeURIComponent(payload);
-      const output = document.getElementById("bookmarkletOutput");
-      output.value = bookmarklet;
-      output.select();
-      document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! วางใน Safari หรือ Browser ได้เลย");
-    }
-  </script>
+  const bookmarklet = "javascript:" + encodeURIComponent(payload);
+  const output = document.getElementById("bookmarkletOutput");
+  output.value = bookmarklet;
+  output.select();
+  document.execCommand("copy");
+  alert("📋 คัดลอก Bookmarklet แล้ว! วางใน Safari หรือ Browser ได้เลย");
+}
+</script>
 </body>
 </html>
