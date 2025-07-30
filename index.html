@@ -84,8 +84,8 @@
 </head>
 <body>
   <div class="container">
-    <img src="https://i.ibb.co/L5ZJ1Jc/popmart-logo.png" alt="POP MART Logo" />
-    <h2>Popmart AutoBot V2.1</h2>
+    <img src="icon.jpg" alt="POP MART Logo" />
+    <h2>Popmart AutoBot V2.3 (Stable)</h2>
 
     <label for="branch">สาขา (Branch)</label>
     <select id="branch">
@@ -113,7 +113,7 @@
     <label for="time">เวลา (Time)</label>
     <select id="time"></select>
 
-    <label id="autoRunLabel"><input type="checkbox" id="autoRun" /> เปิด/ปิดการทำงานอัตโนมัติ (สำหรับ Extension)</label>
+    <label id="autoRunLabel"><input type="checkbox" id="autoRun" /> เปิด/ปิดการทำงานอัตโนมัติ</label>
 
     <button onclick="saveSettings()">Save Settings</button>
     <button onclick="generateBookmarklet()">Copy Bookmarklet</button>
@@ -162,7 +162,6 @@
 (() => {
   if (document.getElementById('bot-status-indicator')) return;
 
-  // --- START: ส่วนจัดการ UI แสดงสถานะ ---
   const createStatusIndicator = () => {
     const indicatorDiv = document.createElement('div');
     indicatorDiv.id = 'bot-status-indicator';
@@ -171,8 +170,7 @@
       #bot-status-indicator {
         position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
         background-color: rgba(29, 31, 33, 0.95); color: white;
-        padding: 12px 24px; border-radius: 10px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 12px 24px; border-radius: 10px; font-family: sans-serif;
         font-size: 16px; font-weight: 600; z-index: 999999;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: flex;
         align-items: center; gap: 12px; transition: all 0.3s;
@@ -186,7 +184,6 @@
     if (el) el.innerHTML = text;
   };
   createStatusIndicator();
-  // --- END: ส่วนจัดการ UI แสดงสถานะ ---
 
   updateStatus('🚀 บอทเริ่มทำงาน');
   const { targetBranch, targetDate, targetTime } = ${JSON.stringify(config)};
@@ -209,7 +206,7 @@
     const target = label.toLowerCase();
     return [...document.querySelectorAll("button, div, span")].find((el) => {
       const text = el.innerText?.trim().toLowerCase() || "";
-      if (isClickable(el) && (el.offsetWidth > 0 || el.offsetHeight > 0) && (text.includes(target))) {
+      if (isClickable(el) && el.offsetWidth > 0 && el.offsetHeight > 0 && text.includes(target)) {
         return el;
       }
       return null;
@@ -219,17 +216,27 @@
   const waitForCountdownToFinish = (callback) => {
     updateStatus('⏳ กำลังรอ Countdown...');
     const loop = setInterval(() => {
-      const countdownEl = [...document.querySelectorAll("div, span, p")].find(el => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
+      const all = [...document.querySelectorAll("div, span, p")];
+      const countdownEl = all.find((el) => el.innerText?.trim().match(/^(\\d{1,2})\\s*:\\s*\\d{1,2}/));
       const text = countdownEl?.innerText?.trim();
-      if (!countdownEl || text.startsWith("0:00") || text.startsWith("00:00")) {
-        clearInterval(loop); callback();
+      const isZero = text?.startsWith("0:00") || text?.startsWith("00:00");
+
+      if (!countdownEl) {
+        updateStatus('✅ ไม่เจอ Countdown, เริ่มทำงานเลย');
+        clearInterval(loop);
+        callback();
+        return;
+      }
+      if (isZero) {
+        clearInterval(loop);
+        updateStatus('✅ Countdown เสร็จสิ้น');
+        callback();
       } else {
         updateStatus(\`⏳ รอ Countdown: \${text}\`);
       }
     }, 300);
   };
 
-  // ✅ STEP FUNCTIONS
   const startFromConfirm = () => {
     updateStatus('✅ กำลังกดยืนยัน...');
     waitFor(() => findButtonFlexible("confirm"), (confirmBtn) => {
@@ -268,11 +275,19 @@
     waitFor(() => findButtonFlexible("register"), (registerBtn) => { forceClick(registerBtn); startFromBranch(); });
   };
 
-  // ✅ STARTING LOGIC
-  if (document.querySelector("button.timeButtons, button.time-btn")) { startFromSelectTime(); }
-  else if (document.querySelector("button[role='gridcell'], .calendar-cell")) { startFromSelectDay(); }
-  else if (document.querySelector(".branch-item")) { startFromBranch(); }
-  else { waitForCountdownToFinish(startFromRegister); }
+  // ✅ CORRECTED STARTING LOGIC
+  if (document.querySelector("button.timeButtons, button.time-btn")) {
+    updateStatus("⏩ อยู่หน้าเลือกเวลาแล้ว");
+    startFromSelectTime();
+  } else if (document.querySelector("button[role='gridcell'], .calendar-cell")) {
+    updateStatus("⏩ อยู่หน้าเลือกวันแล้ว");
+    startFromSelectDay();
+  } else if (document.querySelector(".branch-item") && (!findButtonFlexible("register") || document.querySelector("button.Next, .Next"))) {
+    updateStatus("⏩ อยู่หน้าเลือกสาขาแล้ว");
+    startFromBranch();
+  } else {
+    waitForCountdownToFinish(startFromRegister);
+  }
 })();`;
 
       const bookmarklet = "javascript:" + encodeURIComponent(payload);
@@ -280,7 +295,7 @@
       output.value = bookmarklet;
       output.select();
       document.execCommand("copy");
-      alert("📋 คัดลอก Bookmarklet แล้ว! สามารถนำไปวางในเบราว์เซอร์ได้เลย");
+      alert("📋 คัดลอก Bookmarklet แล้ว! (เวอร์ชันแก้ไข Countdown)");
     }
   </script>
 </body>
